@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.0"/>
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.0" PrivateAssets="all"/>
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="10.0.0"/>
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.2.1"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Nesco.SignalRUserManagement.Core\Nesco.SignalRUserManagement.Core.csproj" />
+      <ProjectReference Include="..\Nesco.SignalRUserManagement.Client\Nesco.SignalRUserManagement.Client.csproj" />
+      <ProjectReference Include="..\Nesco.SignalRCommunicator.Core\Nesco.SignalRCommunicator.Core.csproj" />
+      <ProjectReference Include="..\Nesco.SignalRCommunicator.Client\Nesco.SignalRCommunicator.Client.csproj" />
+      <ProjectReference Include="..\Nesco.SignalRCommunicator.Client.Dashboard\Nesco.SignalRCommunicator.Client.Dashboard.csproj" />
+    </ItemGroup>
+
+</Project>

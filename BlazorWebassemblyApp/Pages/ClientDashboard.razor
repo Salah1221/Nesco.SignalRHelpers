@@ -1,0 +1,115 @@
+@page "/client-dashboard"
+@using Nesco.SignalRCommunicator.Client.Dashboard.Components
+@using Nesco.SignalRCommunicator.Client.Dashboard.Services
+@using BlazorWebassemblyApp.Services
+@inject AuthenticationService AuthService
+@inject SignalRConnectionManager ConnectionManager
+@inject IClientMethodRegistry MethodRegistry
+@inject NavigationManager Navigation
+@implements IDisposable
+
+<PageTitle>SignalR Client Dashboard</PageTitle>
+
+@if (!_isAuthenticated)
+{
+    <div class="text-center mt-5">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p>Checking authentication...</p>
+    </div>
+}
+else
+{
+    <div class="mb-3">
+        <button class="btn btn-outline-danger btn-sm float-end" @onclick="HandleLogout">Logout</button>
+    </div>
+
+    <SignalRClientDashboard
+        Username="@_username"
+        UserManagementHubUrl="/hubs/usermanagement"
+        CommunicatorHubUrl="/hubs/communicator"
+        ServerDashboardUrl="/signalr-dashboard"
+        AutoReconnectDelays="Retry delays: 0s, 2s, 5s, 10s, 30s" />
+}
+
+@code {
+    private bool _isAuthenticated = false;
+    private string _username = string.Empty;
+    private System.Threading.Timer? _reconnectTimer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Check authentication
+        _isAuthenticated = await AuthService.IsAuthenticatedAsync();
+        if (!_isAuthenticated)
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        _username = await AuthService.GetUsernameAsync() ?? "Unknown";
+
+        // Register methods in the registry for display
+        RegisterClientMethods();
+
+        // Connect to SignalR hubs in the background (non-blocking)
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await ConnectionManager.ConnectAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($">>> [ClientDashboard] Initial connection failed: {ex.Message}");
+                StartContinuousRetry();
+            }
+        });
+    }
+
+    private void RegisterClientMethods()
+    {
+        // Register the client methods for display in the dashboard
+        MethodRegistry.RegisterMethod("Ping", "none", "PingResponse", "Connectivity check that returns \"Pong\"", isDefault: true);
+        MethodRegistry.RegisterMethod("GetClientInfo", "none", "ClientInfo", "Returns client platform and timestamp information");
+        MethodRegistry.RegisterMethod("Calculate", "CalculationRequest", "int", "Performs arithmetic operations (add, subtract, multiply, divide)");
+        MethodRegistry.RegisterMethod("GetStatus", "none", "ClientStatus", "Returns client status including memory usage and active features");
+        MethodRegistry.RegisterMethod("ProcessData", "ProcessRequest", "Task<string>", "Asynchronously processes string data (converts to uppercase)");
+        MethodRegistry.RegisterMethod("SimulateDelay", "DelayRequest", "Task<string>", "Simulates long-running operation with configurable delay (0-5000ms)");
+    }
+
+    private void StartContinuousRetry()
+    {
+        _reconnectTimer?.Dispose();
+
+        Console.WriteLine(">>> [ClientDashboard] Starting continuous retry timer (every 30 seconds)");
+
+        _reconnectTimer = new System.Threading.Timer(async _ =>
+        {
+            try
+            {
+                await ConnectionManager.ConnectAsync();
+                Console.WriteLine(">>> [ClientDashboard] Connection successful, stopping retry timer");
+                _reconnectTimer?.Dispose();
+                _reconnectTimer = null;
+            }
+            catch (Exception retryEx)
+            {
+                Console.WriteLine($">>> [ClientDashboard] Continuous retry failed: {retryEx.Message}");
+            }
+        }, null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
+    }
+
+    private async Task HandleLogout()
+    {
+        await ConnectionManager.DisconnectAsync();
+        await AuthService.LogoutAsync();
+        Navigation.NavigateTo("/login");
+    }
+
+    public void Dispose()
+    {
+        _reconnectTimer?.Dispose();
+    }
+}

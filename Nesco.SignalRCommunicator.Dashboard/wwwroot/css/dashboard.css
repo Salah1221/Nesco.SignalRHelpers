@@ -1,0 +1,52 @@
+/* SignalR Dashboard Styles */
+
+.btn-xs {
+    padding: 0.15rem 0.4rem;
+    font-size: 0.75rem;
+    line-height: 1.2;
+    border-radius: 0.2rem;
+}
+
+.table-responsive thead.sticky-top {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.signalr-dashboard {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.signalr-dashboard .card {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.signalr-dashboard .card-header {
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+.signalr-dashboard code {
+    background-color: #f8f9fa;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.9em;
+}
+
+.signalr-dashboard .badge {
+    font-weight: 500;
+}
+
+.signalr-dashboard .list-group-item {
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+}
+
+.signalr-dashboard pre {
+    border-radius: 4px;
+    max-height: 300px;
+    overflow-y: auto;
+}

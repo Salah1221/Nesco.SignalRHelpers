@@ -1,0 +1,436 @@
+@using Microsoft.AspNetCore.Components.Web
+@using Nesco.SignalRCommunicator.Client.Dashboard.Services
+@using Nesco.SignalRCommunicator.Client.Dashboard.Models
+@using Nesco.SignalRUserManagement.Client.Services
+@using Nesco.SignalRCommunicator.Client.Services
+@inject UserConnectionClient UserManagementClient
+@inject ISignalRCommunicatorClient CommunicatorClient
+@inject IMethodInvocationLogger InvocationLogger
+@inject IClientMethodRegistry MethodRegistry
+@implements IDisposable
+
+<link href="_content/Nesco.SignalRCommunicator.Client.Dashboard/css/client-dashboard.css" rel="stylesheet" />
+
+<div class="signalr-client-dashboard">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1>🚀 SignalR Client Dashboard</h1>
+            <p class="text-muted">Real-time connection status and method invocation monitoring</p>
+        </div>
+        @if (!string.IsNullOrEmpty(Username))
+        {
+            <div>
+                <span class="me-3">Welcome, <strong>@Username</strong></span>
+            </div>
+        }
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">📡 User Management Hub</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm table-borderless mb-0">
+                        <tr>
+                            <td><strong>Status:</strong></td>
+                            <td>
+                                @if (_userManagementConnected)
+                                {
+                                    <span class="badge bg-success">✓ Connected</span>
+                                }
+                                else if (_isInitializing || _isReconnecting)
+                                {
+                                    <span class="badge bg-warning">
+                                        <span class="spinner-border spinner-border-sm me-1"></span>
+                                        @(_isInitializing ? "Connecting..." : "Reconnecting...")
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">✗ Disconnected</span>
+                                }
+                            </td>
+                        </tr>
+                        @if (_userManagementConnected && !string.IsNullOrEmpty(_connectionId))
+                        {
+                            <tr>
+                                <td><strong>Connection ID:</strong></td>
+                                <td><code class="text-primary">@_connectionId</code></td>
+                            </tr>
+                        }
+                        <tr>
+                            <td><strong>Hub URL:</strong></td>
+                            <td><small>@UserManagementHubUrl</small></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Auto-Reconnect:</strong></td>
+                            <td>
+                                <span class="badge bg-info">Enabled</span>
+                                <small class="text-muted ms-2">@AutoReconnectDelays</small>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">💬 Communicator Hub</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm table-borderless mb-0">
+                        <tr>
+                            <td><strong>Status:</strong></td>
+                            <td>
+                                @if (_communicatorConnected)
+                                {
+                                    <span class="badge bg-success">✓ Connected</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">✗ Disconnected</span>
+                                }
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Registered Methods:</strong></td>
+                            <td><span class="badge bg-secondary">@_registeredMethods.Count()</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Hub URL:</strong></td>
+                            <td><small>@CommunicatorHubUrl</small></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">📋 Registered Client Methods</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2">The following methods can be invoked by the server via SignalR:</p>
+                    @if (_registeredMethods.Any())
+                    {
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Method Name</th>
+                                    <th>Parameters</th>
+                                    <th>Return Type</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var method in _registeredMethods)
+                                {
+                                    <tr>
+                                        <td><code>@method.Name</code></td>
+                                        <td>@(string.IsNullOrEmpty(method.Parameters) ? "<em>none</em>" : method.Parameters)</td>
+                                        <td><code>@method.ReturnType</code></td>
+                                        <td>
+                                            @if (method.IsDefault)
+                                            {
+                                                <strong>Default: </strong>
+                                            }
+                                            @method.Description
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning mb-0">
+                            No methods registered. Use <code>IClientMethodRegistry.RegisterMethod()</code> to register methods.
+                        </div>
+                    }
+                    <div class="alert alert-info mb-0 mt-3">
+                        <strong>💡 Tip:</strong> Use the server's dashboard at <code>@ServerDashboardUrl</code> to invoke these methods remotely.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">📝 Testing Instructions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-3">
+                        <h6 class="alert-heading">✨ How to Test</h6>
+                        <ol class="mb-0">
+                            <li>Ensure both connection status indicators above show <span class="badge bg-success">✓ Connected</span></li>
+                            <li>Navigate to the server dashboard at <code>@ServerDashboardUrl</code></li>
+                            <li>You should see this client listed in the "Connected Users" section</li>
+                            <li>Use the "Invoke Method" form to call any of the registered methods</li>
+                            <li>Results will appear in the "Method Invocation Log" below</li>
+                        </ol>
+                    </div>
+
+                    <div class="alert alert-warning mb-3">
+                        <h6 class="alert-heading">🔄 Auto-Reconnect Feature</h6>
+                        <p class="mb-2">The client will automatically connect and reconnect:</p>
+                        <ul class="mb-0">
+                            <li><strong>Initial Connection:</strong> If the server is unavailable on page load, status shows <span class="badge bg-warning">Connecting...</span> and retries automatically</li>
+                            <li><strong>Continuous Retry:</strong> After initial attempts fail, the client shows <span class="badge bg-danger">✗ Disconnected</span> and continues retrying every 30 seconds</li>
+                            <li><strong>Connection Drop:</strong> If an established connection drops, status shows <span class="badge bg-warning">Reconnecting...</span> with progressive backoff</li>
+                            <li><strong>No Manual Refresh Required:</strong> Once the server is back online, the client will automatically connect</li>
+                            <li>The same Connection ID is maintained after successful reconnection</li>
+                        </ul>
+                    </div>
+
+                    <div class="alert alert-success mb-0">
+                        <h6 class="alert-heading">🎯 Example Method Calls</h6>
+                        <p><strong>Ping</strong> - No parameters needed (default connectivity check)</p>
+                        <p><strong>GetClientInfo</strong> - No parameters needed</p>
+                        <p><strong>Calculate</strong> - Parameters: <code>{"A": 10, "B": 5, "Operation": "add"}</code></p>
+                        <p><strong>GetStatus</strong> - No parameters needed</p>
+                        <p><strong>ProcessData</strong> - Parameters: <code>{"Data": "hello world"}</code></p>
+                        <p class="mb-0"><strong>SimulateDelay</strong> - Parameters: <code>{"DelayMilliseconds": 2000}</code></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-warning d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">📊 Method Invocation Log</h5>
+                    <button class="btn btn-sm btn-outline-dark" @onclick="ClearLog">Clear Log</button>
+                </div>
+                <div class="card-body">
+                    @if (!_methodLogs.Any())
+                    {
+                        <div class="alert alert-info mb-0">
+                            <p class="mb-0">No methods have been invoked yet. Use the server's dashboard to invoke methods on this client.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                            <table class="table table-sm table-hover method-log-table">
+                                <thead class="sticky-top bg-white">
+                                    <tr>
+                                        <th style="width: 100px;">Time</th>
+                                        <th style="width: 150px;">Method</th>
+                                        <th style="width: 200px;">Parameters</th>
+                                        <th>Result</th>
+                                        <th style="width: 80px;">Duration</th>
+                                        <th style="width: 60px;">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var log in _methodLogs)
+                                    {
+                                        <tr class="@(log.Success ? "" : "table-danger")">
+                                            <td><small>@log.Timestamp.ToString("HH:mm:ss.fff")</small></td>
+                                            <td><code class="text-primary">@log.MethodName</code></td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(log.Parameter))
+                                                {
+                                                    <small class="text-muted" style="font-family: monospace; font-size: 0.85em;">
+                                                        @(log.Parameter.Length > 50 ? log.Parameter.Substring(0, 50) + "..." : log.Parameter)
+                                                    </small>
+                                                }
+                                                else
+                                                {
+                                                    <em class="text-muted">none</em>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (log.Success)
+                                                {
+                                                    <small class="text-success" style="font-family: monospace; font-size: 0.85em;">
+                                                        @(log.Result != null && log.Result.Length > 100 ? log.Result.Substring(0, 100) + "..." : log.Result)
+                                                    </small>
+                                                }
+                                                else
+                                                {
+                                                    <small class="text-danger">@log.Error</small>
+                                                }
+                                            </td>
+                                            <td>
+                                                <span class="badge @(log.Duration.TotalMilliseconds < 100 ? "bg-success" : log.Duration.TotalMilliseconds < 500 ? "bg-warning" : "bg-danger")">
+                                                    @log.Duration.TotalMilliseconds.ToString("F0")ms
+                                                </span>
+                                            </td>
+                                            <td>
+                                                @if (log.Success)
+                                                {
+                                                    <span class="badge bg-success">✓</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-danger">✗</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-2">
+                            <small class="text-muted">Showing last @_methodLogs.Count() invocations (max @InvocationLogger.MaxEntries)</small>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    /// <summary>
+    /// Username to display in the header (optional)
+    /// </summary>
+    [Parameter]
+    public string? Username { get; set; }
+
+    /// <summary>
+    /// User Management Hub URL to display
+    /// </summary>
+    [Parameter]
+    public string UserManagementHubUrl { get; set; } = "/hubs/usermanagement";
+
+    /// <summary>
+    /// Communicator Hub URL to display
+    /// </summary>
+    [Parameter]
+    public string CommunicatorHubUrl { get; set; } = "/hubs/communicator";
+
+    /// <summary>
+    /// Server dashboard URL for the tip
+    /// </summary>
+    [Parameter]
+    public string ServerDashboardUrl { get; set; } = "/signalr-dashboard";
+
+    /// <summary>
+    /// Auto-reconnect delays to display
+    /// </summary>
+    [Parameter]
+    public string AutoReconnectDelays { get; set; } = "Retry delays: 0s, 2s, 5s, 10s, 30s";
+
+    private bool _userManagementConnected = false;
+    private bool _communicatorConnected = false;
+    private bool _isReconnecting = false;
+    private bool _isInitializing = true;
+    private string _connectionId = string.Empty;
+    private System.Threading.Timer? _statusTimer;
+    private IEnumerable<MethodInvocationLog> _methodLogs = Enumerable.Empty<MethodInvocationLog>();
+    private IEnumerable<ClientMethod> _registeredMethods = Enumerable.Empty<ClientMethod>();
+
+    protected override void OnInitialized()
+    {
+        // Subscribe to events
+        UserManagementClient.ConnectionStatusChanged += OnConnectionStatusChanged;
+        UserManagementClient.Reconnecting += OnReconnecting;
+        UserManagementClient.Reconnected += OnReconnected;
+        InvocationLogger.OnLogAdded += OnLogAdded;
+
+        // Load initial data
+        RefreshLogs();
+        RefreshMethods();
+        UpdateConnectionStates();
+
+        // Set up a timer to periodically check connection status
+        _statusTimer = new System.Threading.Timer(async _ =>
+        {
+            UpdateConnectionStates();
+            await InvokeAsync(StateHasChanged);
+        }, null, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
+    }
+
+    private void UpdateConnectionStates()
+    {
+        _userManagementConnected = UserManagementClient.IsConnected;
+        _communicatorConnected = CommunicatorClient.IsConnected;
+
+        if (_userManagementConnected)
+        {
+            _connectionId = UserManagementClient.ConnectionId ?? string.Empty;
+
+            // Mark initialization as complete when connected
+            if (_isInitializing)
+            {
+                _isInitializing = false;
+            }
+        }
+        else
+        {
+            _connectionId = string.Empty;
+        }
+    }
+
+    private async void OnConnectionStatusChanged(bool isConnected)
+    {
+        if (_isInitializing)
+        {
+            _isInitializing = false;
+        }
+
+        UpdateConnectionStates();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async void OnReconnecting()
+    {
+        _isInitializing = false;
+        _isReconnecting = true;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async void OnReconnected(string? connectionId)
+    {
+        _isInitializing = false;
+        _isReconnecting = false;
+        UpdateConnectionStates();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async void OnLogAdded()
+    {
+        RefreshLogs();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void RefreshLogs()
+    {
+        _methodLogs = InvocationLogger.GetLogs();
+    }
+
+    private void RefreshMethods()
+    {
+        _registeredMethods = MethodRegistry.GetMethods();
+    }
+
+    private void ClearLog()
+    {
+        InvocationLogger.Clear();
+        RefreshLogs();
+    }
+
+    public void Dispose()
+    {
+        _statusTimer?.Dispose();
+
+        UserManagementClient.ConnectionStatusChanged -= OnConnectionStatusChanged;
+        UserManagementClient.Reconnecting -= OnReconnecting;
+        UserManagementClient.Reconnected -= OnReconnected;
+        InvocationLogger.OnLogAdded -= OnLogAdded;
+    }
+}

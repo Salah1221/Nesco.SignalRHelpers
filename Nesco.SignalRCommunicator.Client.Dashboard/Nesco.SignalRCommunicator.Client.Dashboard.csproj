@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+
+        <!-- NuGet Package Configuration -->
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <PackageId>Nesco.SignalRCommunicator.Client.Dashboard</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>Nesco</Authors>
+        <Company>Nesco</Company>
+        <Product>SignalR Communicator Client Dashboard</Product>
+        <Description>A ready-to-use Blazor WebAssembly dashboard component for SignalR client status, connection monitoring, and method invocation logging.</Description>
+        <PackageTags>signalr;blazor;webassembly;dashboard;client;realtime</PackageTags>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <!-- Package References -->
+        <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="9.0.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="9.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- Project References -->
+        <ProjectReference Include="..\Nesco.SignalRCommunicator.Client\Nesco.SignalRCommunicator.Client.csproj" />
+        <ProjectReference Include="..\Nesco.SignalRUserManagement.Client\Nesco.SignalRUserManagement.Client.csproj" />
+    </ItemGroup>
+
+</Project>

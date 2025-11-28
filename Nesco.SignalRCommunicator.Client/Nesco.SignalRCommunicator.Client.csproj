@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+        <!-- NuGet Package Metadata -->
+        <PackageId>Nesco.SignalRCommunicator.Client</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>Nesco</Authors>
+        <Company>Nesco</Company>
+        <Description>Client library for SignalR-based communication. Connect to a SignalR server, receive method invocations, and return responses with automatic large data handling.</Description>
+        <PackageTags>SignalR;RPC;Client;Communication;Real-time</PackageTags>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <RepositoryUrl>https://github.com/yourusername/Nesco.SignalRCommunicator</RepositoryUrl>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <TargetFramework>net10.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Nesco.SignalRCommunicator.Core\Nesco.SignalRCommunicator.Core.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\" />
+    </ItemGroup>
+
+</Project>

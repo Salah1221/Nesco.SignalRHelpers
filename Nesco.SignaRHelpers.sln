@@ -1,0 +1,70 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nesco.SignalRUserManagement.Core", "Nesco.SignalRUserManagement.Core\Nesco.SignalRUserManagement.Core.csproj", "{EF4A85EC-DEFD-40A6-921A-F361704EC47D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nesco.SignalRCommunicator.Core", "Nesco.SignalRCommunicator.Core\Nesco.SignalRCommunicator.Core.csproj", "{754B7A2F-5488-4719-85EE-000A5F479CAE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nesco.SignalRCommunicator.Client", "Nesco.SignalRCommunicator.Client\Nesco.SignalRCommunicator.Client.csproj", "{9926E03A-A750-4EB8-878F-2AEF6000742B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nesco.SignalRCommunicator.Server", "Nesco.SignalRCommunicator.Server\Nesco.SignalRCommunicator.Server.csproj", "{EC46A1B9-098F-4323-87DE-72D494F25B78}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nesco.SignalRUserManagement.Client", "Nesco.SignalRUserManagement.Client\Nesco.SignalRUserManagement.Client.csproj", "{DD2B295D-6C41-418F-B98F-D86D1AF0DA5A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nesco.SignalRUserManagement.Server", "Nesco.SignalRUserManagement.Server\Nesco.SignalRUserManagement.Server.csproj", "{4D4492A6-C4D5-4EB7-BC98-AFEA9E2A1092}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nesco.SignalRCommunicator.Dashboard", "Nesco.SignalRCommunicator.Dashboard\Nesco.SignalRCommunicator.Dashboard.csproj", "{D3F8CAFB-FAE6-4914-888F-21025418F226}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nesco.SignalRCommunicator.Client.Dashboard", "Nesco.SignalRCommunicator.Client.Dashboard\Nesco.SignalRCommunicator.Client.Dashboard.csproj", "{A8DEF5DC-52FD-49D2-AD4D-CF5FA0921BF8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorServerApplication", "BlazorServerApplication\BlazorServerApplication.csproj", "{958A0D78-60C3-4B22-B222-0EB830356344}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorWebassemblyApp", "BlazorWebassemblyApp\BlazorWebassemblyApp.csproj", "{0C42331F-F6E1-41A3-99F5-809A5E2C2BF6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EF4A85EC-DEFD-40A6-921A-F361704EC47D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EF4A85EC-DEFD-40A6-921A-F361704EC47D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EF4A85EC-DEFD-40A6-921A-F361704EC47D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EF4A85EC-DEFD-40A6-921A-F361704EC47D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{754B7A2F-5488-4719-85EE-000A5F479CAE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{754B7A2F-5488-4719-85EE-000A5F479CAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{754B7A2F-5488-4719-85EE-000A5F479CAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{754B7A2F-5488-4719-85EE-000A5F479CAE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9926E03A-A750-4EB8-878F-2AEF6000742B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9926E03A-A750-4EB8-878F-2AEF6000742B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9926E03A-A750-4EB8-878F-2AEF6000742B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9926E03A-A750-4EB8-878F-2AEF6000742B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EC46A1B9-098F-4323-87DE-72D494F25B78}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EC46A1B9-098F-4323-87DE-72D494F25B78}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EC46A1B9-098F-4323-87DE-72D494F25B78}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EC46A1B9-098F-4323-87DE-72D494F25B78}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DD2B295D-6C41-418F-B98F-D86D1AF0DA5A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DD2B295D-6C41-418F-B98F-D86D1AF0DA5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DD2B295D-6C41-418F-B98F-D86D1AF0DA5A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DD2B295D-6C41-418F-B98F-D86D1AF0DA5A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4D4492A6-C4D5-4EB7-BC98-AFEA9E2A1092}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4D4492A6-C4D5-4EB7-BC98-AFEA9E2A1092}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4D4492A6-C4D5-4EB7-BC98-AFEA9E2A1092}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4D4492A6-C4D5-4EB7-BC98-AFEA9E2A1092}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D3F8CAFB-FAE6-4914-888F-21025418F226}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D3F8CAFB-FAE6-4914-888F-21025418F226}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D3F8CAFB-FAE6-4914-888F-21025418F226}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D3F8CAFB-FAE6-4914-888F-21025418F226}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A8DEF5DC-52FD-49D2-AD4D-CF5FA0921BF8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A8DEF5DC-52FD-49D2-AD4D-CF5FA0921BF8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A8DEF5DC-52FD-49D2-AD4D-CF5FA0921BF8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A8DEF5DC-52FD-49D2-AD4D-CF5FA0921BF8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{958A0D78-60C3-4B22-B222-0EB830356344}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{958A0D78-60C3-4B22-B222-0EB830356344}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{958A0D78-60C3-4B22-B222-0EB830356344}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{958A0D78-60C3-4B22-B222-0EB830356344}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0C42331F-F6E1-41A3-99F5-809A5E2C2BF6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0C42331F-F6E1-41A3-99F5-809A5E2C2BF6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0C42331F-F6E1-41A3-99F5-809A5E2C2BF6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0C42331F-F6E1-41A3-99F5-809A5E2C2BF6}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

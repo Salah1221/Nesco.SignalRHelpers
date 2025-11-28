@@ -1,0 +1,455 @@
+@page "/signalr-test"
+@using BlazorServerApplication.Services
+@using Nesco.SignalRCommunicator.Core.Models
+@using System.Text.Json
+@inject IUnifiedSignalRService SignalRService
+@rendermode InteractiveServer
+
+<PageTitle>SignalR Unified Test</PageTitle>
+
+<style>
+    .btn-xs {
+        padding: 0.15rem 0.4rem;
+        font-size: 0.75rem;
+        line-height: 1.2;
+        border-radius: 0.2rem;
+    }
+</style>
+
+<h1>SignalR Unified Demo - Method Invocation Testing</h1>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">📡 Connected Users</h5>
+                <div>
+                    <button class="btn btn-success btn-sm me-2" @onclick="PingAllUsers" title="Ping all connected users">
+                        📡 Ping All
+                    </button>
+                    <button class="btn btn-primary btn-sm" @onclick="RefreshConnections">
+                        🔄 Refresh
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                @if (_connectedUsers == null)
+                {
+                    <p><em>Loading...</em></p>
+                }
+                else if (!_connectedUsers.Any())
+                {
+                    <div class="alert alert-warning">No users currently connected</div>
+                }
+                else
+                {
+                    <table class="table table-sm table-hover">
+                        <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Connections</th>
+                            <th>Last Connected</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var user in _connectedUsers)
+                        {
+                            <tr>
+                                <td>
+                                    <div>
+                                        <strong>@user.Username</strong>
+                                        @if (!string.IsNullOrEmpty(user.Email))
+                                        {
+                                            <br /><small class="text-muted">@user.Email</small>
+                                        }
+                                        <br /><code class="text-muted" style="font-size: 0.85em;">@user.UserId</code>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success">@user.Connections.Count</span>
+                                </td>
+                                <td>@user.LastConnect?.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary me-2" @onclick="() => PingUser(user.UserId)" title="Ping this user">
+                                        📡 Ping
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary" @onclick="() => ToggleConnectionDetails(user.UserId)">
+                                        @(_expandedUsers.Contains(user.UserId) ? "▼ Hide" : "▶ Show") Details
+                                    </button>
+                                </td>
+                            </tr>
+                            @if (_expandedUsers.Contains(user.UserId))
+                            {
+                                <tr>
+                                    <td colspan="4" class="bg-light">
+                                        <div class="p-2">
+                                            <strong>Connections:</strong>
+                                            <table class="table table-sm mt-2">
+                                                <thead>
+                                                <tr>
+                                                    <th>Connection ID</th>
+                                                    <th>User Agent</th>
+                                                    <th>Connected At</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                                </thead>
+                                                <tbody>
+                                                @foreach (var conn in user.Connections)
+                                                {
+                                                    <tr>
+                                                        <td><code class="text-primary">@conn.ConnectionId</code></td>
+                                                        <td><small>@conn.UserAgent</small></td>
+                                                        <td>@conn.ConnectedAt.ToString("HH:mm:ss")</td>
+                                                        <td>
+                                                            <button class="btn btn-xs btn-outline-primary" @onclick="() => PingConnection(conn.ConnectionId)" title="Ping this specific connection">
+                                                                📡 Ping
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        </tbody>
+                    </table>
+                    <div class="alert alert-info">
+                        <strong>Summary:</strong> @_connectedUsers.Count users, @_connectedUsers.Sum(u => u.Connections.Count) total connections
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">🚀 Invoke Method</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Method Name</label>
+                        <input type="text" class="form-control" @bind="_methodName" placeholder="e.g., GetClientInfo"/>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Target Type</label>
+                        <select class="form-select" @bind="_targetType">
+                            <option value="All">All Connected Users</option>
+                            <option value="User">Single User</option>
+                            <option value="Users">Multiple Users</option>
+                            <option value="Connection">Single Connection</option>
+                        </select>
+                    </div>
+                </div>
+
+                @if (_targetType != "All")
+                {
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label class="form-label">@GetTargetLabel()</label>
+                            <input type="text" class="form-control" @bind="_target" placeholder="@GetTargetPlaceholder()"/>
+                            <div class="form-text">@GetTargetHelperText()</div>
+                        </div>
+                    </div>
+                }
+
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label class="form-label">Parameters (JSON)</label>
+                        <textarea class="form-control font-monospace" rows="5" @bind="_parameters" placeholder='{"A": 5, "B": 3}'></textarea>
+                        <div class="form-text">Enter parameters as JSON object, or leave empty for no parameters</div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <button class="btn btn-primary" @onclick="InvokeMethod" disabled="@_isInvoking">
+                            @if (_isInvoking)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2"></span>
+                                <span>Invoking...</span>
+                            }
+                            else
+                            {
+                                <span>🎯 Invoke Method</span>
+                            }
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">📋 Invocation Results</h5>
+                <button class="btn btn-sm btn-outline-secondary" @onclick="ClearResults">Clear</button>
+            </div>
+            <div class="card-body">
+                @if (!_results.Any())
+                {
+                    <p class="text-muted">No invocations yet. Use the form above to test method invocation.</p>
+                }
+                else
+                {
+                    <div class="list-group">
+                        @foreach (var result in _results.OrderByDescending(r => r.Timestamp))
+                        {
+                            <div class="list-group-item @(result.Success ? "list-group-item-success" : "list-group-item-danger")">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">
+                                        @(result.Success ? "✅" : "❌") @result.MethodName → @result.Target
+                                    </h6>
+                                    <small>@result.Timestamp.ToString("HH:mm:ss")</small>
+                                </div>
+                                @if (result.Success)
+                                {
+                                    <p class="mb-1"><strong>Result:</strong></p>
+                                    <pre class="mb-0 bg-light p-2"><code>@result.Result</code></pre>
+                                }
+                                else
+                                {
+                                    <p class="mb-1 text-danger"><strong>Error:</strong> @result.Error</p>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<ConnectedUserInfo>? _connectedUsers;
+    private HashSet<string> _expandedUsers = new();
+
+    private string _methodName = "Ping";
+    private string _targetType = "All";
+    private string _target = "";
+    private string _parameters = "";
+    private bool _isInvoking = false;
+
+    private List<InvocationResult> _results = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshConnections();
+    }
+
+    private async Task RefreshConnections()
+    {
+        _connectedUsers = await SignalRService.GetConnectedUsersAsync();
+    }
+
+    private void ToggleConnectionDetails(string userId)
+    {
+        if (_expandedUsers.Contains(userId))
+            _expandedUsers.Remove(userId);
+        else
+            _expandedUsers.Add(userId);
+    }
+
+    private async Task PingUser(string userId)
+    {
+        _methodName = "Ping";
+        _targetType = "User";
+        _target = userId;
+        _parameters = "";
+        await InvokeMethod();
+    }
+
+    private async Task PingAllUsers()
+    {
+        _methodName = "Ping";
+        _targetType = "All";
+        _target = "";
+        _parameters = "";
+        await InvokeMethod();
+    }
+
+    private async Task PingConnection(string connectionId)
+    {
+        _methodName = "Ping";
+        _targetType = "Connection";
+        _target = connectionId;
+        _parameters = "";
+        await InvokeMethod();
+    }
+
+    private string GetTargetLabel()
+    {
+        return _targetType switch
+        {
+            "User" => "User ID",
+            "Users" => "User IDs (comma-separated)",
+            "Connection" => "Connection ID",
+            _ => "Target"
+        };
+    }
+
+    private string GetTargetPlaceholder()
+    {
+        return _targetType switch
+        {
+            "User" => "Enter User ID",
+            "Users" => "user1,user2,user3",
+            "Connection" => "Enter Connection ID",
+            _ => ""
+        };
+    }
+
+    private string GetTargetHelperText()
+    {
+        return _targetType switch
+        {
+            "User" => "Enter the User ID from the table above",
+            "Users" => "Enter multiple User IDs separated by commas",
+            "Connection" => "Expand a user's connections above and copy a Connection ID",
+            _ => ""
+        };
+    }
+
+    private async Task InvokeMethod()
+    {
+        if (string.IsNullOrWhiteSpace(_methodName))
+        {
+            AddResult(false, _methodName, _targetType, null, "Method name is required");
+            return;
+        }
+
+        if (_targetType != "All" && string.IsNullOrWhiteSpace(_target))
+        {
+            AddResult(false, _methodName, _targetType, null, "Target is required for the selected target type");
+            return;
+        }
+
+        _isInvoking = true;
+        StateHasChanged();
+
+        try
+        {
+            // Parse parameters
+            object? paramObj = null;
+            if (!string.IsNullOrWhiteSpace(_parameters))
+            {
+                try
+                {
+                    paramObj = JsonSerializer.Deserialize<JsonElement>(_parameters);
+                }
+                catch (Exception ex)
+                {
+                    AddResult(false, _methodName, _targetType, null, $"Invalid JSON parameters: {ex.Message}");
+                    return;
+                }
+            }
+
+            SignalRResponse response;
+            string targetDisplay;
+
+            switch (_targetType)
+            {
+                case "All":
+                    response = await SignalRService.InvokeOnAllConnectedAsync(_methodName, paramObj);
+                    targetDisplay = "All Users";
+                    break;
+
+                case "User":
+                    response = await SignalRService.InvokeOnUserAsync(_target, _methodName, paramObj);
+                    targetDisplay = $"User {_target}";
+                    break;
+
+                case "Users":
+                    var userIds = _target.Split(',').Select(id => id.Trim()).Where(id => !string.IsNullOrWhiteSpace(id));
+                    response = await SignalRService.InvokeOnUsersAsync(userIds, _methodName, paramObj);
+                    targetDisplay = $"Users ({_target})";
+                    break;
+
+                case "Connection":
+                    response = await SignalRService.InvokeOnConnectionAsync(_target, _methodName, paramObj);
+                    targetDisplay = $"Connection {_target}";
+                    break;
+
+                default:
+                    AddResult(false, _methodName, _targetType, null, "Invalid target type");
+                    return;
+            }
+
+            // Process response
+            if (response != null)
+            {
+                if (!string.IsNullOrEmpty(response.ErrorMessage))
+                {
+                    AddResult(false, _methodName, targetDisplay, null, response.ErrorMessage);
+                }
+                else
+                {
+                    var resultJson = response.JsonData != null
+                        ? JsonSerializer.Serialize(response.JsonData, new JsonSerializerOptions { WriteIndented = true })
+                        : response.FilePath ?? "(null)";
+
+                    AddResult(true, _methodName, targetDisplay, resultJson, null);
+                }
+            }
+            else
+            {
+                AddResult(false, _methodName, targetDisplay, null, "No response received");
+            }
+        }
+        catch (TimeoutException ex)
+        {
+            AddResult(false, _methodName, _targetType, null, $"Timeout: {ex.Message}");
+        }
+        catch (InvalidOperationException ex)
+        {
+            AddResult(false, _methodName, _targetType, null, ex.Message);
+        }
+        catch (Exception ex)
+        {
+            AddResult(false, _methodName, _targetType, null, $"Error: {ex.Message}");
+        }
+        finally
+        {
+            _isInvoking = false;
+            StateHasChanged();
+        }
+    }
+
+    private void AddResult(bool success, string methodName, string target, string? result, string? error)
+    {
+        _results.Add(new InvocationResult
+        {
+            Timestamp = DateTime.Now,
+            Success = success,
+            MethodName = methodName,
+            Target = target,
+            Result = result,
+            Error = error
+        });
+    }
+
+    private void ClearResults()
+    {
+        _results.Clear();
+    }
+
+    private class InvocationResult
+    {
+        public DateTime Timestamp { get; set; }
+        public bool Success { get; set; }
+        public string MethodName { get; set; } = "";
+        public string Target { get; set; } = "";
+        public string? Result { get; set; }
+        public string? Error { get; set; }
+    }
+}

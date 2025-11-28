@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+        <!-- NuGet Package Metadata -->
+        <PackageId>Nesco.SignalRCommunicator.Core</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>Nesco</Authors>
+        <Company>Nesco</Company>
+        <Description>Core library for SignalR-based client-server communication with support for large data transfer via file uploads.</Description>
+        <PackageTags>SignalR;RPC;Communication;Real-time</PackageTags>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <RepositoryUrl>https://github.com/yourusername/Nesco.SignalRCommunicator</RepositoryUrl>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\" />
+    </ItemGroup>
+
+</Project>

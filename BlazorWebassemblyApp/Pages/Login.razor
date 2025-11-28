@@ -1,0 +1,106 @@
+@page "/login"
+@using BlazorWebassemblyApp.Services
+@inject AuthenticationService AuthService
+@inject NavigationManager Navigation
+@inject IConfiguration Configuration
+
+<PageTitle>Login - SignalR Demo</PageTitle>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">SignalR Demo Login</h4>
+                </div>
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(_errorMessage))
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            @_errorMessage
+                        </div>
+                    }
+
+                    <div class="alert alert-info">
+                        <strong>Note:</strong> Use your registered account credentials from the BlazorServerApplication.
+                    </div>
+
+                    <form @onsubmit="HandleLogin">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Email or Username</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="username"
+                                   @bind="_username"
+                                   placeholder="Enter your email or username"
+                                   required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password"
+                                   class="form-control"
+                                   id="password"
+                                   @bind="_password"
+                                   placeholder="Enter your password"
+                                   required />
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit"
+                                    class="btn btn-primary"
+                                    disabled="@_isLoading">
+                                @if (_isLoading)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2"></span>
+                                    <span>Logging in...</span>
+                                }
+                                else
+                                {
+                                    <span>Login</span>
+                                }
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-muted text-center">
+                    <small>Demo Authentication for SignalR Testing</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string _username = "";
+    private string _password = "";
+    private string _errorMessage = "";
+    private bool _isLoading = false;
+
+    private async Task HandleLogin()
+    {
+        _errorMessage = "";
+        _isLoading = true;
+
+        try
+        {
+            var serverUrl = Configuration["ServerUrl"] ?? "http://localhost:5200";
+            var success = await AuthService.LoginAsync(_username, _password, serverUrl);
+
+            if (success)
+            {
+                Navigation.NavigateTo("/", forceLoad: true);
+            }
+            else
+            {
+                _errorMessage = "Login failed. Please check your credentials.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Login error: {ex.Message}";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+}
