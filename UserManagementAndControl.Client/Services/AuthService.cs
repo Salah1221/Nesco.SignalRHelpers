@@ -1,13 +1,21 @@
 using System.Net.Http.Json;
 using System.Security.Claims;
+using System.Text.Json;
+using Microsoft.JSInterop;
 
 namespace UserManagementAndControl.Client.Services;
 
 public class AuthService
 {
     private readonly HttpClient _httpClient;
+    private readonly IJSRuntime _jsRuntime;
     private ClaimsPrincipal _currentUser = new(new ClaimsIdentity());
     private string? _accessToken;
+    private bool _initialized;
+
+    private const string TokenKey = "authToken";
+    private const string UserIdKey = "userId";
+    private const string EmailKey = "userEmail";
 
     public event Action? AuthStateChanged;
 
@@ -16,9 +24,10 @@ public class AuthService
     public string? AccessToken => _accessToken;
     public string? UserId => _currentUser.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-    public AuthService(HttpClient httpClient)
+    public AuthService(HttpClient httpClient, IJSRuntime jsRuntime)
     {
         _httpClient = httpClient;
+        _jsRuntime = jsRuntime;
     }
 
     public async Task<LoginResult> LoginAsync(string email, string password)
@@ -33,7 +42,11 @@ public class AuthService
                 if (result != null)
                 {
                     _accessToken = result.Token;
-                    SetUser(result.UserId, result.Email);
+                    await SetUserAsync(result.UserId, result.Email);
+                    
+                    // Persist to localStorage
+                    await SaveToLocalStorageAsync(result.Token, result.UserId, result.Email);
+                    
                     return new LoginResult { Success = true };
                 }
             }
@@ -47,22 +60,80 @@ public class AuthService
         }
     }
 
-    public Task LogoutAsync()
+    public async Task LogoutAsync()
     {
         _accessToken = null;
         _currentUser = new ClaimsPrincipal(new ClaimsIdentity());
+        
+        // Clear from localStorage
+        await ClearLocalStorageAsync();
+        
         AuthStateChanged?.Invoke();
-        return Task.CompletedTask;
     }
 
-    public Task<bool> CheckAuthAsync()
+    public async Task<bool> CheckAuthAsync()
     {
+        // Initialize from localStorage on first check
+        if (!_initialized)
+        {
+            await InitializeFromLocalStorageAsync();
+            _initialized = true;
+        }
+
         // For JWT, we don't check with server - token is stored client-side
         // If we have a token and user, we're authenticated
-        return Task.FromResult(IsAuthenticated);
+        return IsAuthenticated;
     }
 
-    private void SetUser(string userId, string email)
+    private async Task InitializeFromLocalStorageAsync()
+    {
+        try
+        {
+            var token = await _jsRuntime.InvokeAsync<string?>("localStorage.getItem", TokenKey);
+            var userId = await _jsRuntime.InvokeAsync<string?>("localStorage.getItem", UserIdKey);
+            var email = await _jsRuntime.InvokeAsync<string?>("localStorage.getItem", EmailKey);
+
+            if (!string.IsNullOrEmpty(token) && !string.IsNullOrEmpty(userId) && !string.IsNullOrEmpty(email))
+            {
+                _accessToken = token;
+                await SetUserAsync(userId, email);
+            }
+        }
+        catch (Exception)
+        {
+            // If localStorage is not available or throws an error, just continue without persisted auth
+        }
+    }
+
+    private async Task SaveToLocalStorageAsync(string? token, string userId, string email)
+    {
+        try
+        {
+            await _jsRuntime.InvokeVoidAsync("localStorage.setItem", TokenKey, token ?? "");
+            await _jsRuntime.InvokeVoidAsync("localStorage.setItem", UserIdKey, userId);
+            await _jsRuntime.InvokeVoidAsync("localStorage.setItem", EmailKey, email);
+        }
+        catch (Exception)
+        {
+            // If localStorage is not available, just continue without persistence
+        }
+    }
+
+    private async Task ClearLocalStorageAsync()
+    {
+        try
+        {
+            await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", TokenKey);
+            await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", UserIdKey);
+            await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", EmailKey);
+        }
+        catch (Exception)
+        {
+            // If localStorage is not available, just continue
+        }
+    }
+
+    private Task SetUserAsync(string userId, string email)
     {
         var claims = new[]
         {
@@ -73,6 +144,7 @@ public class AuthService
 
         _currentUser = new ClaimsPrincipal(new ClaimsIdentity(claims, "jwt"));
         AuthStateChanged?.Invoke();
+        return Task.CompletedTask;
     }
 }
 
