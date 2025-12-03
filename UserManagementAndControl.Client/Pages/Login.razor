@@ -56,6 +56,16 @@
     private string? errorMessage;
     private bool isLoading;
 
+    protected override async Task OnInitializedAsync()
+    {
+        // If already authenticated, redirect to home
+        var isAuthenticated = await AuthService.CheckAuthAsync();
+        if (isAuthenticated)
+        {
+            Navigation.NavigateTo("/");
+        }
+    }
+
     private async Task HandleLogin()
     {
         isLoading = true;
